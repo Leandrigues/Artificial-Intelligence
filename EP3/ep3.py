@@ -13,8 +13,8 @@
   ENTENDO QUE EPS SEM ASSINATURA NAO SERAO CORRIGIDOS E,
   AINDA ASSIM, PODERAO SER PUNIDOS POR DESONESTIDADE ACADEMICA.
 
-  Nome :
-  NUSP :
+  Nome : Leandro Rodrigues da Silva
+  NUSP : 10723944
 
   Referencias: Com excecao das rotinas fornecidas no enunciado
   e em sala de aula, caso voce tenha utilizado alguma referencia,
@@ -31,6 +31,7 @@ import math
 import random
 from collections import defaultdict
 import util
+import json
 
 
 # **********************************************************
@@ -77,7 +78,7 @@ class BlackjackMDP(util.MDP):
 
     def succAndProbReward(self, state, action):
         """
-        Given a |state| and |action|, return a list of (newState, prob, reward) tuples
+        Given a |state| and |action|, return a list of (new_state, prob, reward) tuples
         corresponding to the states reachable from |state| when taking |action|.
         A few reminders:
          * Indicate a terminal state (after quitting, busting, or running out of cards)
@@ -86,9 +87,72 @@ class BlackjackMDP(util.MDP):
          * When the probability is 0 for a transition to a particular new state,
            don't include that state in the list returned by succAndProbReward.
         """
-        # BEGIN_YOUR_CODE
-        raise Exception("Not implemented yet")
-        # END_YOUR_CODE
+        reachable_states = []
+        if state[2] == None:
+            return []
+        if action == 'Sair':
+            new_state = (state[0], None, None)
+            reward = state[0]
+            reachable = (new_state, 1, reward)
+            reachable_states.append(reachable)
+        if action == 'Pegar':
+            if state[1] != None:
+                card_index = state[1]                
+                if self.valores_cartas[card_index] + state[0] > self.limiar:
+                    reward = 0
+                    new_deck = None
+                    prob = 1
+                    new_state = (0, None, None)
+                else:
+                    new_amount = state[2][card_index] - 1
+                    new_deck = state[2][:card_index] + (new_amount,) + state[2][card_index+1:]
+                    if new_deck == (0,) * len(self.valores_cartas):
+                        new_deck = None
+                        reward = self.valores_cartas[card_index] + state[0]
+                    else:
+                        reward = 0
+                    new_state = (self.valores_cartas[card_index] + state[0], None, new_deck)
+                    prob = 1
+                reachable = (new_state, prob, reward)
+                reachable_states.append(reachable)
+            else:
+                for i in range(len(state[2])):
+                    amount = state[2][i]
+                    reward = 0
+                    if amount != 0:
+                        new_amount = amount - 1
+                            
+                        if state[0] + amount > self.limiar:
+                            reward = 0
+                            new_state = (0, None, None)    
+                        else:
+                            new_deck = state[2][:i] + (new_amount,) + state[2][i+1:]
+                            if new_deck == (0,) * len(self.valores_cartas):
+                                new_deck = None
+                                reward = self.valores_cartas[i] + state[0]
+                            new_state = (state[0] + state[2][i], None, new_deck)
+                        total_amount = 0
+                        for j in range(len(state[2])):
+                            total_amount += state[2][j]                             
+                        prob = amount / total_amount
+                        reachable = (new_state, prob, reward)
+                        reachable_states.append(reachable)
+        if action == 'Espiar':
+            if state[1] != None:
+                return []
+            spy_card = 0
+            # print("Estado antes de espiar:", state)
+            j = 0
+            while spy_card == 0:
+                # spy_index = random.randint(0, len(state[2]) - 1)
+                spy_index = j
+                spy_card = state[2][spy_index]
+                j = j + 1 % len(state[2])
+            new_state = (state[0], spy_index, state[2])
+            reachable = (new_state, 1, -1*self.custo_espiada)
+            reachable_states.append(reachable)
+            # print("Estado depois de espiar:", new_state)
+        return reachable_states
 
     def discount(self):
         """
@@ -118,8 +182,8 @@ class ValueIteration(util.MDPAlgorithm):
         mdp.computeStates()
         def computeQ(mdp, V, state, action):
             # Return Q(state, action) based on V(state).
-            return sum(prob * (reward + mdp.discount() * V[newState]) \
-                            for newState, prob, reward in mdp.succAndProbReward(state, action))
+            return sum(prob * (reward + mdp.discount() * V[new_state]) \
+                            for new_state, prob, reward in mdp.succAndProbReward(state, action))
 
         def computeOptimalPolicy(mdp, V):
             # Return the optimal policy given the values V.
@@ -127,11 +191,34 @@ class ValueIteration(util.MDPAlgorithm):
             for state in mdp.states:
                 pi[state] = max((computeQ(mdp, V, state, action), action) for action in mdp.actions(state))[1]
             return pi
-        V = defaultdict(float)  # state -> value of state
-        # Implement the main loop of Asynchronous Value Iteration Here:
-        # BEGIN_YOUR_CODE
-        raise Exception("Not implemented yet")
-        # END_YOUR_CODE
+
+        def computeValue(mdp):
+            V = {}
+            for state in mdp.states:
+                V[state] = 0
+            while True:
+                Vp = {}
+                for state in mdp.states:
+                    if state[2] == None:
+                        Vp[state] = 0
+                    else:
+                        Vp[state] = max(computeQ(mdp, V, state, action) for action in mdp.actions(state))
+                if max(abs(V[state] - Vp[state]) for state in mdp.states) < epsilon:
+                        break
+                    # V = Vp.copy()
+                V = Vp
+
+                return V
+            # while delta >= epsilon:
+            #     # print("iteração")
+            #     # U2 = {state : float('-inf') for state in mdp.states}
+            #     delta = 0
+            #     U = U2.copy()
+            #     for state in mdp.states:
+            #         U2[state] = max(computeQ(mdp, U, state, action) for action in mdp.actions(state))
+            #         delta = max(delta, abs(U2[state] - U[state]))
+            # return U
+        V = computeValue(mdp)  # state -> value of state
 
         # Extract the optimal policy now
         pi = computeOptimalPolicy(mdp, V)
@@ -151,6 +238,7 @@ def geraMDPxereta():
     optimal action for at least 10% of the states.
     """
     # BEGIN_YOUR_CODE
+    # MDP1 = BlackjackMDP(valores_cartas=[11, 5], multiplicidade=2, limiar=10, custo_espiada=1)
     raise Exception("Not implemented yet")
     # END_YOUR_CODE
 
@@ -202,7 +290,7 @@ class QLearningAlgorithm(util.RLAlgorithm):
         """
         return 1.0 / math.sqrt(self.numIters)
 
-    def incorporateFeedback(self, state, action, reward, newState):
+    def incorporateFeedback(self, state, action, reward, new_state):
         """
          We will call this function with (s, a, r, s'), which you should use to update |weights|.
          You should update the weights using self.getStepSize(); use
@@ -238,3 +326,21 @@ def blackjackFeatureExtractor(state, action):
     # BEGIN_YOUR_CODE
     raise Exception("Not implemented yet")
     # END_YOUR_CODE
+
+
+# smallMDP = BlackjackMDP(valores_cartas=[1, 5], multiplicidade=2,
+                                # limiar=15, custo_espiada=1)
+# preEmptyState = (11, None, (1,0))
+# Make sure the succAndProbReward function is implemented correctly.
+# tests = [
+#     ([((12, None, None), 1, 12)], smallMDP, preEmptyState, 'Pegar'),
+#     ([((5, None, (2, 1)), 1, 0)], smallMDP, (0, 1, (2, 2)), 'Pegar')
+#     ]
+# print(smallMDP.succAndProbReward((5, None, (2, 1)), 'Pegar'))
+    
+# print(smallMDP.succAndProbReward((5, None, (2, 1)), 'Espiar'))
+
+# MDP1 = BlackjackMDP(valores_cartas=[1, 5], multiplicidade=2, limiar=10, custo_espiada=1)
+teste = ValueIteration()
+teste.solve(MDP2)
+print(teste.V)
