@@ -160,14 +160,13 @@ def insertVowels(queryWords, bigramCost, possibleFills):
     finalState = goalNode.state
     solutionArray = [i for i in finalState[1:]]
     solution = ' '.join(solutionArray)
-
     return solution
 
 ############################################################
 
 
-def getRealCosts(corpus='corpus.txt'):
 
+def getRealCosts(corpus):
     """ Retorna as funcoes de custo unigrama, bigrama e possiveis fills obtidas a partir do corpus."""
     
     _realUnigramCost, _realBigramCost, _possibleFills = None, None, None
@@ -175,7 +174,10 @@ def getRealCosts(corpus='corpus.txt'):
         print('Training language cost functions [corpus: '+ corpus+']... ')
         
         _realUnigramCost, _realBigramCost = util.makeLanguageModels(corpus)
-        _possibleFills = util.makeInverseRemovalDictionary(corpus, 'aeiou')
+        if corpus == "corpus.txt":
+            _possibleFills = util.makeInverseRemovalDictionary(corpus, 'aeiou')
+        else:
+            _possibleFills = util.makeInverseRemovalDictionary(corpus, 'aáàãâeéêiíoõôóuú')
 
         print('Done!')
 
@@ -188,14 +190,26 @@ def main():
     lhe dar uma ideia de como instanciar e chamar suas funcoes.
     Descomente as linhas que julgar conveniente ou crie seus proprios testes.
     """
-    unigramCost, bigramCost, possibleFills  =  getRealCosts()
-    
-    # resulSegment = segmentWords('believeinyourself', unigramCost)
-    # resulSegment = segmentWords('believeinyourselfhavefaithinyourabilities', unigramCost)
-    # print(resulSegment)
-    
+    # Para alterar o corpus, basta trocar o valor da variável:    
+    corpus = 'corpus.txt'
+    # Para tornar o recebimento do corpus iterativo, remova os comentários:
+    #############################################################
+    # lang = input("Qual idioma deseja utilizar? (Português=PT, Inglês=EN)")
 
-    resultInsert = insertVowels('smtms ltr bcms nvr'.split(), bigramCost, possibleFills)
+    # if lang == 'PT':
+    #     corpus = 'corpusPT.txt'
+    # else:
+    #     corpus = 'corpus.txt'
+    #############################################################
+    param1 = 'believeinyourselfhavefaithinyourabilities'
+    param2 = 'smtms ltr bcms nvr'
+
+    unigramCost, bigramCost, possibleFills  =  getRealCosts(corpus)
+    
+    resultSegment = segmentWords(param1, unigramCost)
+    print(resultSegment)
+
+    resultInsert = insertVowels(param2.split(), bigramCost, possibleFills)
     print(resultInsert)
 
 if __name__ == '__main__':

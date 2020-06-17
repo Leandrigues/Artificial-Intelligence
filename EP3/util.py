@@ -47,6 +47,7 @@ class MDP:
         while len(queue) > 0:
             state = queue.pop()
             for action in self.actions(state):
+                # print("STATE, ACTION: ",state, action)
                 for newState, prob, reward in self.succAndProbReward(state, action):
                     if newState not in self.states:
                         self.states.add(newState)
