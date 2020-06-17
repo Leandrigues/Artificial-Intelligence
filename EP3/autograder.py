@@ -9,12 +9,12 @@ try:
     from ep3 import *
 except Exception as e:
     if os.path.exists("final_result.txt"):
-        file_flag = "a"
+        file_flag = "w"
     else:
         file_flag = "w"
 
     if os.path.exists("../results.csv"):
-        csv_flag = "a"
+        csv_flag = "w"
     else:
         csv_flag = "w"
 
@@ -57,7 +57,7 @@ class Timeout():
 
 def run_tests():
     if os.path.exists("final_result.txt"):
-        file_flag = "a"
+        file_flag = "w"
     else:
         file_flag = "w"
     file_results = open("final_result.txt", file_flag)
@@ -234,6 +234,7 @@ def run_tests():
         total_tests_global += 1
         total_tests += 1
         f = len([a for a in vi.pi.values() if a == 'Espiar']) / float(len(vi.pi.values()))
+        file_results.write(str(f))
         if f >= 0.1:
             test_results +=1
         file_results.write("Peeking MDP:\t{0}/{1} correct\n".format(test_results, total_tests))
@@ -411,7 +412,7 @@ def run_tests():
     
     # Concluding and updating csv with grades
     if os.path.exists("../results.csv"):
-        csv_flag = "a"
+        csv_flag = "w"
     else:
         csv_flag = "w"
     #pdb.set_trace()
