@@ -162,6 +162,7 @@ def simulate(mdp, rl, numTrials=10, maxIterations=1000, verbose=False,
 
             rl.incorporateFeedback(state, action, reward, newState)
             totalReward += totalDiscount * reward
+            # print(reward)
             totalDiscount *= mdp.discount()
             state = newState
         if verbose:

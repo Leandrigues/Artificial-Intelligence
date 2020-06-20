@@ -1,0 +1,60 @@
+******************************
+Code quality:
+------------------------------
+Code grade: 6.40/10.0	(Code with reasonably quality)
+------------------------------
+Standards deviation:
+statement:	164
+info:	0
+convention:	49
+refactor:	4
+warning:	6
+error:	0
+fatal:	0
+------------------------------
+Deviation description:
+trailing-whitespace:	3
+line-too-long:	2
+bad-indentation:	2
+bad-whitespace:	1
+missing-final-newline:	1
+singleton-comparison:	4
+too-many-nested-blocks:	1
+too-many-branches:	1
+too-many-statements:	1
+invalid-name:	34
+arguments-differ:	2
+too-few-public-methods:	1
+consider-using-enumerate:	1
+unused-variable:	1
+missing-function-docstring:	1
+consider-iterating-dictionary:	1
+unused-import:	1
+wrong-import-order:	1
+******************************
+Tests:
+------------------------------
+Parte01-01 Modeling MDPs:
+Modeling MDPs:	2/2 correct
+Test concluded without errors
+Grade in the Test01: 10.0/10.0
+------------------------------
+Part02-01 ValueIteration::
+ValueIteration:	1/1 correct
+Test concluded without errors
+Grade in the Test02-01: 10.0/10.0
+------------------------------
+Part02-02 Peeking MDP:
+0.1Peeking MDP:	1/1 correct
+Test concluded without errors
+Grade in the Test02-02: 10.0/10.0
+------------------------------
+Part03-01 QLearningAlgorithm:
+QLearningAlgorithm:	4/4 correct
+Test concluded without errors
+Grade in the Test03-01: 10.0/10.0
+------------------------------
+Part03-02 BlackjackFeatureExtractor:
+BlackjackFeatureExtractor:	2/2 correct
+Test concluded without errors
+Grade in the Test03-02: 10.0/10.0

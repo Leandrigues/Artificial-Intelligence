@@ -102,7 +102,7 @@ class BlackjackMDP(util.MDP):
                 prob = 1
                 if self.valores_cartas[card_index] + state[0] > self.limiar:
                     reward = 0
-                    new_state = (0, None, None)
+                    new_state = (state[0] + self.valores_cartas[card_index], None, None)
                 else:
                     new_amount = state[2][card_index] - 1
                     new_deck = state[2][:card_index] + (new_amount,) + state[2][card_index+1:]
@@ -194,7 +194,6 @@ class ValueIteration(util.MDPAlgorithm):
             V = Vp
         # Extract the optimal policy now
         pi = computeOptimalPolicy(mdp, V)
-        # print("ValueIteration: %d iterations" % numIters)
         self.pi = pi
         self.V = V
 
@@ -203,14 +202,13 @@ MDP1 = BlackjackMDP(valores_cartas=[1, 5], multiplicidade=2, limiar=10, custo_es
 
 # Second MDP
 MDP2 = BlackjackMDP(valores_cartas=[1, 5], multiplicidade=2, limiar=15, custo_espiada=1)
-
 def geraMDPxereta():
     """
     Return an instance of BlackjackMDP where peeking is the
     optimal action for at least 10% of the states.
     """
     # BEGIN_YOUR_CODE
-    return BlackjackMDP(valores_cartas=[1,2,3,4,5,21], multiplicidade=1, limiar=20, custo_espiada=1)
+    return BlackjackMDP(valores_cartas=[4, 5, 22], multiplicidade=1, limiar=20, custo_espiada=1)
     # return MDP
     # END_YOUR_CODE
 
@@ -252,9 +250,6 @@ class QLearningAlgorithm(util.RLAlgorithm):
         |explorationProb|, take a random action.
         """
         self.numIters += 1
-        # for action in self.actions(state):
-            # print(self.getQ(state, action))
-        print("ACTIONS:", self.actions)
         if random.random() < self.explorationProb:
             return random.choice(self.actions(state))
         return max((self.getQ(state, action), action) for action in self.actions(state))[1]
@@ -279,10 +274,7 @@ class QLearningAlgorithm(util.RLAlgorithm):
         difference = (reward + self.discount * v_max) - self.getQ(state, action)
         alpha = self.getStepSize()
         for f, v in self.featureExtractor(state, action):
-            print("Weight de ", f, "antes: ", self.weights[f], v)
             self.weights[f] += alpha*(difference)*v
-            print(alpha, difference, v)
-            print("Weight de ", f, "depois: ", self.weights[f])
             
 
 def identityFeatureExtractor(state, action):
@@ -307,8 +299,62 @@ def blackjackFeatureExtractor(state, action):
     (See identityFeatureExtractor() above for a simple example.)
     """
     # BEGIN_YOUR_CODE
-    raise Exception("Not implemented yet")
+    total, peek_card, deck = state
+    if deck == None:
+        return []
+
+    features = []
+    # Exemplo 1
+    features.append(((total, action), 1))
+
+    # Exemplo 2
+    presence = ()
+    for card in deck:
+        if card > 0:
+            presence = presence + (1,)
+    features.append(((presence, action), 1))
+
+    # Exemplo 3
+    for i in range(len(deck)):
+        features.append(((i, deck[i], action), 1))
+
+    # Feature extra - ((cartaEspiada, action). 1):
+    # if peek_card != None:
+        # features.append(((peek_card, action), 1))
+
+    return features
     # END_YOUR_CODE
 
+def simulaMDP(mdp, extractor, explorationProb):
+    value_iterator = ValueIteration()
+    value_iterator.solve(mdp)
+    policyVi = value_iterator.pi
+    mdp.computeStates()
+
+    qLearning = QLearningAlgorithm(mdp.actions, mdp.discount(), extractor, explorationProb)
+    util.simulate(mdp,qLearning, 30000, 10, False, False)
+    mdp.explorationProb = 0
+    actionsQ = {}
+
+    for state in mdp.states:
+        actionsQ[state] = qLearning.getAction(state)
+
+    differentActions = 0
+    for state in actionsQ.keys():
+        if actionsQ[state] != policyVi[state]:
+            differentActions += 1
+    return differentActions
 
 
+# SIMULAÇÕES (Descomentar para testar)
+# 1 - MDP1 com expProb 0.2
+# print("Diferença em MDP1:", simulaMDP(MDP1, identityFeatureExtractor, 0.2))
+
+# 2 - largeMDP com expProb 0
+# print("Diferença em largeMDP:", simulaMDP(largeMDP, identityFeatureExtractor, 0))
+
+# 3 - largeMDP com expProb 0 e blackJackFeature
+# print("Diferença em largeMDP:", simulaMDP(largeMDP, blackjackFeatureExtractor, 0.2))
+
+# 4 - largeMDP com expProb 0.2 e blackJackFeature
+# print("Diferença em largeMDP:", simulaMDP(largeMDP, blackjackFeatureExtractor, 0.2))

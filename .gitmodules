@@ -1,0 +1,3 @@
+[submodule "ep3-tests"]
+	path = ep3-tests
+	url = git@github.com:caiotda/ep3-tests.git
